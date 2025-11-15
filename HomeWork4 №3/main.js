@@ -1,54 +1,66 @@
-const container = document.getElementById('container');
-const search = document.getElementById('search');
+const input = document.getElementById("name");
+const root = document.getElementById("root");
 
-let products = []; 
+let products = [];
 
 const getData = async () => {
   try {
-    const res = await fetch("https://fakestoreapi.com/products/"); 
+    const res = await fetch("https://fakestoreapi.com/products/");
     products = await res.json();
-
-    renderProducts(products);
-
+    render(products);
   } catch (err) {
-    container.innerHTML = `<p style="color:red;">Ошибка: ${err.message}</p>`;
+    console.log(err.message);
   }
 };
 
 getData();
 
+function render(list) {
+  root.innerHTML = "";
 
-function renderProducts(list, query = "") {
-  container.innerHTML = list
-    .map(item => {
-      let title = item.title;
-
-     
-      if (query) {
-        const reg = new RegExp(query, "gi");
-        title = title.replace(reg, match => `<mark>${match}</mark>`);
-      }
-
-      return `
-        <div class="product">
-          <img src="${item.image}" alt="${item.title}" width="100">
-          <h3>${title}</h3>
-          <p>${item.price} $</p>
-        </div>
-      `;
-    })
-    .join("");
+  list.forEach((item) => {
+    const div = document.createElement("div");
+    div.style.margin = "8px 0";
+    div.innerHTML = `
+      <h3>${item.title}</h3>
+    `;
+    root.appendChild(div);
+  });
 }
 
+input.addEventListener("input", function () {
+  const text = this.value.trim().toLowerCase();
 
+  if (!text) {
+    render(products);
+    return;
+  }
 
+  const filtered = products
+    .filter((p) => p.title.toLowerCase().includes(text))
+    .map((p) => {
+      const regex = new RegExp(`(${text})`, "gi");
+      const highlighted = p.title.replace(regex, "<mark>$1</mark>");
 
-search.addEventListener("input", (e) => {
-  const query = e.target.value.trim().toLowerCase();
+      return {
+        ...p,
+        highlightedTitle: highlighted,
+      };
+    });
 
-  const filtered = products.filter(item =>
-    item.title.toLowerCase().includes(query)
-  );
-
-  renderProducts(filtered, query);
+  renderHighlight(filtered);
 });
+
+function renderHighlight(list) {
+  root.innerHTML = "";
+
+  list.forEach((item) => {
+    const div = document.createElement("div");
+    div.style.margin = "8px 0";
+    div.innerHTML = `
+      <h3>${item.highlightedTitle}</h3>
+    `;
+    root.appendChild(div);
+  });
+}
+
